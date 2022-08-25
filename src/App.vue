@@ -15,6 +15,10 @@
 			</el-option>
 		</el-select>
 		<div id="movieChart"></div>
+		<!-- 	Dynamic result count => totalResults 
+				Default page size (of endpoint) => 20
+				Current page is binded to page
+		-->
 		<el-pagination
 			class="chart-wrapper__pagination"
 			background
@@ -43,7 +47,7 @@ export default {
 					type: "column",
 				},
 				title: {
-					text: "Top Movies",
+					text: "Movies",
 				},
 				subtitle: {
 					text: "",
@@ -110,6 +114,7 @@ export default {
 					value: "#4",
 				},
 			],
+			// not the best way to put "#" but it is ok for now...
 			selectType: "top_rated#1",
 			endpoint: "top_rated",
 			sort: 1,
@@ -118,6 +123,7 @@ export default {
 	methods: {
 		async updateChart() {
 			let pageToShow = this.page;
+			// if sorting is reversed I reverse the page number (total = 500 pages, 501 - 1 = 500 => last page =>> sorting reversed)
 			if (this.sort == 0) {
 				pageToShow = 501 - pageToShow;
 			}
@@ -130,26 +136,39 @@ export default {
 				)
 				.then((response) => {
 					const { results, total_results } = response.data;
-					this.totalResults = total_results >= 10000 ? 10000 : total_results; // page must be less than or equal to 500
+					// page must be less than or equal to 500 -> api error
+					this.totalResults = total_results >= 10000 ? 10000 : total_results;
 					const allData = [];
 					const data = [];
 					const dataNames = [];
-					let dataToGet = "vote_average";
-					let dataName = "Movie Rating";
-					if (this.sort == 0 || this.sort == 1) {
-						dataToGet =
-							this.endpoint === "top_rated" ? "vote_average" : "popularity";
-						dataName =
-							this.endpoint === "top_rated"
-								? "Movie Rating"
-								: "Movie Popularity";
-					} else if (this.sort == 2 || this.sort == 3) {
-						dataToGet = "release_date";
-						dataName = "Release Date";
-					} else if (this.sort == 4 || this.sort == 5) {
-						dataToGet = "vote_count";
-						dataName = "Vote Count";
+					let dataToGet;
+					let dataName;
+					switch (this.sort) {
+						case "0":
+						case "1":
+							dataToGet =
+								this.endpoint === "top_rated" ? "vote_average" : "popularity";
+							dataName =
+								this.endpoint === "top_rated"
+									? "Movie Rating"
+									: "Movie Popularity";
+							break;
+						case "2":
+						case "3":
+							dataToGet = "release_date";
+							dataName = "Release Date";
+							break;
+						case "4":
+						case "5":
+							dataToGet = "vote_count";
+							dataName = "Vote Count";
+							break;
+						default:
+							dataToGet = "vote_average";
+							dataName = "Movie Rating";
+							break;
 					}
+
 					results.forEach((result) => {
 						if (dataToGet === "release_date") {
 							allData.push({
@@ -177,6 +196,7 @@ export default {
 					} else if (this.endpoint === "popular") {
 						this.options.yAxis.tickInterval = 10;
 					}
+					// new options
 					this.options.xAxis.categories = dataNames;
 					this.options.yAxis.min =
 						data.reduce((a, b) => Math.min(a, b)) -
@@ -223,6 +243,7 @@ export default {
 						this.options.yAxis.min =
 							this.options.yAxis.min < 0 ? 0 : this.options.yAxis.min;
 					}
+					// render again
 					Highcharts.chart("movieChart", this.options);
 				});
 		},
@@ -237,6 +258,7 @@ export default {
 			}
 			this.sort = changeSplit[1];
 			this.options.title.text = "data";
+			// page is restored to 1 in order to prevent edge cases
 			this.page = 1;
 			this.updateChart();
 		},
