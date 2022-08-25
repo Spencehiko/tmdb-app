@@ -192,6 +192,11 @@ export default {
 						this.endpoint === "top_rated"
 							? "Top Rated Movies"
 							: "Most Popular Movies";
+					if (this.sort == 2 || this.sort == 3) {
+						this.options.title.text += " by Release Date";
+					} else if (this.sort == 4 || this.sort == 5) {
+						this.options.title.text += " by Vote Count";
+					}
 					this.options.yAxis.labels = {
 						formatter: function () {
 							return this.value;
